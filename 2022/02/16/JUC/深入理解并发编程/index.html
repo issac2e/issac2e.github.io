@@ -1,0 +1,432 @@
+<!DOCTYPE html><html lang="zh_CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"><title>深入理解并发编程 | 每天进步一点点</title><meta name="author" content="issac"><meta name="copyright" content="issac"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文转自https:&amp;#x2F;&amp;#x2F;www.hollischuang.com&amp;#x2F;archives&amp;#x2F;3060 一、什么是线程安全线程安全，维基百科中的解释是：  线程安全是编程中的术语，指某个函数、函数库在并发环境中被调用时，能够正确地处理多个线程之间的共享变量，使程序功能正确完成。  我们把这个定义拆解一下，我们"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://issac2e.github.io/2022/02/16/JUC/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  }
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '深入理解并发编程',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-02-12 09:39:17'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = url => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      link.onload = () => resolve()
+      link.onerror = () => reject()
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/./img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">13</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">7</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/./img/preview5.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="每天进步一点点"><span class="site-name">每天进步一点点</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">深入理解并发编程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2022-02-16T22:02:08.000Z" title="Created 2022-02-16 22:02:08">2022-02-16</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2023-02-12T09:39:17.247Z" title="Updated 2023-02-12 09:39:17">2023-02-12</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/JUC/">JUC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="深入理解并发编程"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p><strong><font color="#0000dd">本文转自<a target="_blank" rel="noopener" href="https://www.hollischuang.com/archives/3060">https://www.hollischuang.com/archives/3060</a></font></strong></p>
+<h1 id="一、什么是线程安全"><a href="#一、什么是线程安全" class="headerlink" title="一、什么是线程安全"></a>一、什么是线程安全</h1><p>线程安全，维基百科中的解释是：</p>
+<blockquote>
+<p>线程安全是编程中的术语，指某个函数、函数库在<strong>并发</strong>环境中被调用时，能够正确地处理<strong>多个线程</strong>之间的<strong>共享变量</strong>，使程序功能正确完成。</p>
+</blockquote>
+<p>我们把这个定义拆解一下，我们需要弄清楚这么几点： <strong>1、并发 2、多线程 3、共享变量</strong></p>
+<h2 id="并发"><a href="#并发" class="headerlink" title="并发"></a>并发</h2><p>提到线程安全，必须要提及的一个词那就是并发，如果没有并发的话，那么也就不存在线程安全问题了。</p>
+<h3 id="什么是并发"><a href="#什么是并发" class="headerlink" title="什么是并发"></a>什么是并发</h3><p>并发（Concurrent），在操作系统中，是指一个时间段中有几个程序都处于已启动运行到运行完毕之间，且这几个程序都是在同一个处理机上运行。</p>
+<p>那么，操作系统视如何实现这种并发的呢？</p>
+<p>现在我们用到操作系统，无论是Windows、Linux还是MacOS等其实都是**<font color="#dd0000">多用户多任务分时操作系统</font>**。使用这些操作系统的用户是可以“同时”干多件事的。</p>
+<p>但是实际上，对于单CPU的计算机来说，在CPU中，同一时间是只能干一件事儿的。为了看起来像是“同时干多件事”，**<font color="#0000dd">分时操作系统是把CPU的时间划分成 长短基本相同的时间区间,即”时间片”，通过操作系统的管理，把这些时间片依次轮流地分配给各个用户使用。</font>**</p>
+<p>如果某个作业在时间片结束之前,整个任务还没有完成，那么该作业就被暂停下来,放弃CPU，等待下一轮循环再继续做.此时CPU又分配给另一个作业去使用。</p>
+<p>由于计算机的处理速度很快，只要时间片的间隔取得适当,那么一个用户作业从用完分配给它的一个时间片到获得下一个CPU时间片，中间有所”停顿”，但用户察觉不出来,好像整个系统全由它”独占”似的。</p>
+<p>所以，在单CPU的计算机中，我们看起来“同时干多件事”，其实是通过CPU时间片技术，并发完成的。</p>
+<p>提到并发，还有另外一个词容易和他混淆，那就是并行。</p>
+<h3 id="并发与并行之间的关系"><a href="#并发与并行之间的关系" class="headerlink" title="并发与并行之间的关系"></a>并发与并行之间的关系</h3><p><strong><font color="#0000dd">并行（Parallel），当系统有一个以上CPU时，当一个CPU执行一个进程时，另一个CPU可以执行另一个进程，两个进程互不抢占CPU资源，可以同时进行，这种方式我们称之为并行(Parallel)。</font></strong></p>
+<p>Erlang 之父 Joe Armstrong 用一张比较形象的图解释了并发与并行的区别：</p>
+<img src="/images/Snipaste_2023-02-12_05-37-42.png" alt="img" style="zoom: 50%;" />
+
+<p>并发是两个队伍交替使用一台咖啡机。并行是两个队伍同时使用两台咖啡机。</p>
+<p>映射到计算机系统中，上图中的咖啡机就是CPU，两个队伍指的就是两个进程。</p>
+<h2 id="多线程"><a href="#多线程" class="headerlink" title="多线程"></a>多线程</h2><h3 id="进程和线程"><a href="#进程和线程" class="headerlink" title="进程和线程"></a>进程和线程</h3><p>理解了并发和并行之间的关系和区别后，我们再回到前面介绍的多任务分时操作系统，看看CPU是如何进行进程调度的。</p>
+<p>为了看起来像是“同时干多件事”，分时操作系统是把CPU的时间划分成长短基本相同的”时间片”，通过操作系统的管理，把这些时间片依次轮流地分配给各个用户的各个任务使用。</p>
+<p>在多任务处理系统中，CPU需要处理所有程序的操作，当用户来回切换它们时，<strong>需要记录这些程序执行到哪里</strong>。在操作系统中，**<font color="#0000dd">CPU切换到另一个进程需要保存当前进程的状态并恢复另一个进程的状态</font><strong>：</strong><font color="#dd0000">当前运行任务转为就绪（或者挂起、删除）状态，另一个被选定的就绪任务成为当前任务</font><strong>。</strong>上下文切换**就是这样一个过程，他允许CPU记录并恢复各种正在运行程序的状态，使它能够完成切换操作。</p>
+<blockquote>
+<p>在上下文切换过程中，CPU会停止处理当前运行的程序，并保存当前程序运行的具体位置以便之后继续运行。从这个角度来看，上下文切换有点像我们同时阅读几本书，在来回切换书本的同时我们需要<strong>记住每本书当前读到的页码</strong>。在程序中，上下文切换过程中的“页码”信息是保存在<strong>进程控制块（PCB）中的</strong>。PCB还经常被称作“<strong>切换帧</strong>”（switchframe）。“页码”信息会一直<strong>保存到CPU的内存</strong>中，直到他们被再次使用。</p>
+</blockquote>
+<p>对于操作系统来说，一个任务就是一个进程（Process），比如打开一个浏览器就是启动一个浏览器进程，打开一个记事本就启动了一个记事本进程，打开两个记事本就启动了两个记事本进程，打开一个Word就启动了一个Word进程。</p>
+<p>而在多个进程之间切换的时候，需要进行上下文切换。但是上下文切换势必会耗费一些资源。于是人们考虑，能不能在一个进程中增加一些“子任务”，这样减少上下文切换的成本。比如我们使用Word的时候，它可以同时进行打字、拼写检查、字数统计等，<strong>这些子任务之间共用同一个进程资源</strong>，但是<strong>他们之间的切换不需要进行上下文切换。</strong></p>
+<p>在一个进程内部，要同时干多件事，就需要同时运行多个“子任务”，我们把进程内的<strong>这些“子任务”称为线程</strong>（Thread）。</p>
+<p>随着时间的慢慢发展，人们进一步的切分了进程和线程之间的职责。**<font color="#dd0000">把进程当做资源分配的基本单元，把线程当做执行的基本单元，同一个进程的多个线程之间共享资源</font>**</p>
+<p>拿我们比较熟悉的Java语言来说，Java程序是运行在JVM上面的，<strong>每一个JVM其实就是一个进程</strong>。所有的资源分配都是基于JVM进程来的。而在这个JVM进程中，<strong>又可以创建出很多线程，多个线程之间共享JVM资源，并且多个线程可以并发执行。</strong></p>
+<h2 id="共享变量"><a href="#共享变量" class="headerlink" title="共享变量"></a>共享变量</h2><p>所谓共享变量，指的是<strong>多个线程都可以操作的变量。</strong></p>
+<p>前面我们提到过，进程视分配资源的基本单位，线程是执行的基本单位。所以，多个线程之间是可以共享一部分进程中的数据的。在JVM中，**<font color="#dd0000">Java堆和方法区的区域是多个线程共享的数据区域</font>**。也就是说，多个线程可以操作保存在堆或者方法区中的同一个数据。那么，换句话说，保存在堆和方法区中的变量就是Java中的共享变量。</p>
+<p>那么，Java中哪些变量是存放在<strong>堆</strong>中，哪些变量是存放在<strong>方法区</strong>中，又有哪些变量是存放在<strong>栈中</strong>的呢？</p>
+<h3 id="类变量、成员变量和局部变量"><a href="#类变量、成员变量和局部变量" class="headerlink" title="类变量、成员变量和局部变量"></a>类变量、成员变量和局部变量</h3><p>Java中共有三种变量，分别是**<font color="#006600">类变量、成员变量和局部变量</font><strong>。他们</strong>分别存放在JVM的方法区、堆内存和栈内存**中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @author Hollis</span><br><span class="line"> */</span><br><span class="line">public class Variables &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 类变量</span><br><span class="line">     */</span><br><span class="line">    private static int a;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 成员变量</span><br><span class="line">     */</span><br><span class="line">    private int b;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 局部变量</span><br><span class="line">     * @param c</span><br><span class="line">     */</span><br><span class="line">    public void test(int c)&#123;</span><br><span class="line">        int d;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面定义的三个变量中，变量a就是类变量，变量b就是成员变量，而变量c和d是局部变量。</p>
+<p>所以，<strong>变量a和b是共享变量</strong>，<strong>变量c和d是非共享变量</strong>。所以如果遇到<strong>多线程场景，对于变量a和b的操作是需要考虑线程安全的</strong>，而对于线程c和d的操作是不需要考虑线程安全的。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>在了解了一些基础知识以后，我们再来回过头看看线程安全的定义：</p>
+<blockquote>
+<p>线程安全是编程中的术语，指某个函数、函数库在<strong>并发</strong>环境中被调用时，能够正确地处理<strong>多个线程</strong>之间的<strong>共享变量</strong>，使程序功能正确完成。</p>
+</blockquote>
+<p>现在我们知道了什么是并发环境，什么是多个线程以及什么是共享变量。那么只要我们在编写多线程的代码的时候注意一下，保证程序功能可以正确的执行就行了。</p>
+<p>那么问题来了，定义中说线程安全能够<strong>正确地处理</strong>多个线程之间的共享变量，使程序功能<strong>正确完成</strong>。</p>
+<p><strong>多线程场景中存在哪些问题</strong>会导致无法正确的处理共享变量？ 多线程场景中存在哪些问题会导致程序无法正确完成？ 如何解决多线程场景中影响『正确』的这些问题？ 解决这些问题的<strong>各个手段的实现原理</strong>又是什么？</p>
+<h1 id="二、进一步理解Java中的线程-上）"><a href="#二、进一步理解Java中的线程-上）" class="headerlink" title="二、进一步理解Java中的线程(上）"></a>二、进一步理解Java中的线程(上）</h1><p>要想真正的理解Java并发编程，线程是无论如何都必须要彻底理解的一个重要概念。那么，在开始深入介绍之前，我们先来深入的学习一下线程。接下来的两个章节都会围绕线程来展开。如无特殊说明，均以Java语言为背景。</p>
+<h2 id="线程的特点"><a href="#线程的特点" class="headerlink" title="线程的特点"></a>线程的特点</h2><p>在多线程操作系统中，通常是在<strong>一个进程中包括多个线程，每个线程都是作为利用CPU的基本单位，是花费最小开销的实体</strong>。线程具有以下属性。</p>
+<h3 id="轻型实体"><a href="#轻型实体" class="headerlink" title="轻型实体"></a>轻型实体</h3><p>线程中的实体<strong>基本上不拥有系统资源</strong>，只是有一点必不可少的、能保证独立运行的资源。 线程的实体包括<strong>程序、数据和TCB</strong>。线程是动态概念，它的动态特性由**<font color="#006600">线程控制块TCB</font><strong>（Thread Control Block）描述。TCB包括以下信息： （1）</strong>线程状态<strong>。 （2）</strong>当线程不运行时，被保存的现场资源。** （3）<strong>一组执行堆栈</strong>。 （4）<strong>存放每个线程的局部变量主存区。</strong> （5）<strong>访问同一个进程中的主存和其它资源。</strong> 用于指示被执行指令序列的程序计数器、保留局部变量、少数状态参数和返回地址等的一组寄存器和堆栈。</p>
+<h3 id="独立调度和分派的基本单位。"><a href="#独立调度和分派的基本单位。" class="headerlink" title="独立调度和分派的基本单位。"></a>独立调度和分派的基本单位。</h3><p>在多线程操作系统中，线程是能独立运行的基本单位，因而也是独立调度和分派的基本单位。由于线程很“轻”，故<strong>线程的切换非常迅速且开销小</strong>（在同一进程中的）。</p>
+<h3 id="可并发执行。"><a href="#可并发执行。" class="headerlink" title="可并发执行。"></a>可并发执行。</h3><p>在一个进程中的多个线程之间，可以并发执行，甚至允许在一个进程中所有线程都能并发执行；同样，不同进程中的线程也能并发执行，充分利用和发挥了处理机与外围设备并行工作的能力。</p>
+<h3 id="共享进程资源。"><a href="#共享进程资源。" class="headerlink" title="共享进程资源。"></a>共享进程资源。</h3><p>在同一进程中的各个线程，都可以共享该进程所拥有的资源，这首先表现在：<strong>所有线程都具有相同的地址空间</strong>（进程的地址空间），这意味着，线程可以访问该地址空间的每一个虚地址；此外，还可以访问进程所拥有的已打开文件、定时器、信号量机构等。**<font color="#0000dd">由于同一个进程内的线程共享内存和文件，所以线程之间互相通信不必调用内核。</font>**</p>
+<h2 id="线程的实现"><a href="#线程的实现" class="headerlink" title="线程的实现"></a>线程的实现</h2><p>主流的操作系统都提供了线程实现，**<font color="#0000dd">实现线程主要有3种方式</font><strong>：</strong>使用内核线程实现、使用用户线程实现和使用用户线程加轻量级进程混合实现。**</p>
+<h3 id="使用内核线程实现"><a href="#使用内核线程实现" class="headerlink" title="使用内核线程实现"></a>使用内核线程实现</h3><p><strong>内核线程</strong>（Kernel-Level Thread,KLT）就是直接由操作系统内核（Kernel，下称内核）支持的线程，<strong>这种线程由内核来完成线程切换，内核通过操纵调度器（Scheduler）对线程进行调度，并负责将线程的任务映射到各个处理器上</strong>。每个内核线程可以视为内核的一个分身，这样操作系统就有能力同时处理多件事情，支持多线程的内核就叫做<strong>多线程内核</strong>（Multi-Threads Kernel）。</p>
+<p>　　程序一般不会直接去使用内核线程，而是去使用内核线程的一种高级接口——<strong>轻量级进程</strong>（Light Weight Process,LWP），轻量级进程就是我们通常意义上所讲的线程，由于<strong>每个轻量级进程都由一个内核线程支持</strong>，因此只有先支持内核线程，才能有轻量级进程。这种轻量级进程与内核线程之间1:1的关系称为一对一的线程模型，如图所示。</p>
+<p><img src="/images/Snipaste_2023-02-12_06-47-20.png" alt="img" style="zoom:50%;" />￼</p>
+<p>　　由于内核线程的支持，每个轻量级进程都成为一个独立的调度单元，即使有一个轻量级进程在系统调用中阻塞了，也不会影响整个进程继续工作，但是轻量级进程具有它的局限性：首先，由于是<strong>基于内核线程实现</strong>的，所以<strong>各种线程操作，如创建、析构及同步，都需要进行系统调用。而系统调用的代价相对较高</strong>，需要在<strong>用户态（User Mode）和内核态（Kernel Mode）中来回切换</strong>。其次，每个轻量级进程都需要有一个内核线程的支持，因此轻量级进程要消耗一定的内核资源（如内核线程的栈空间），因此一个系统支持轻量级进程的数量是有限的。</p>
+<h3 id="使用用户线程实现"><a href="#使用用户线程实现" class="headerlink" title="使用用户线程实现"></a>使用用户线程实现</h3><p>　　从广义上来讲，<strong>一个线程只要不是内核线程，就可以认为是用户线程</strong>（User Thread,UT），因此，从这个定义上来讲，轻量级进程也属于用户线程，但轻量级进程的实现始终是建立在内核之上的，许多操作都要进行系统调用，效率会受到限制。</p>
+<p>　　而狭义上的用户线程指的是<strong>完全建立在用户空间的线程库上</strong>，系统内核不能感知线程存在的实现。用户线程的建立、同步、销毁和调度完全在用户态中完成，不需要内核的帮助。如果程序实现得当，<strong>这种线程不需要切换到内核态，因此操作可以是非常快速且低消耗的，</strong>也可以支持规模更大的线程数量，部分高性能数据库中的多线程就是由用户线程实现的。这种进程与用户线程之间1：N的关系称为一对多的线程模型，如图所示。</p>
+<p><img src="/images/Snipaste_2023-02-12_06-56-34.png" alt="img" style="zoom: 67%;" />￼</p>
+<p>　　<strong>使用用户线程的优势在于不需要系统内核支援，劣势也在于没有系统内核的支援，所有的线程操作都需要用户程序自己处理</strong>。线程的<strong>创建、切换和调度</strong>都是需要考虑的问题，而且由于操作系统只把处理器资源分配到进程，那诸如“<strong>阻塞如何处理</strong>”、“<strong>多处理器系统中如何将线程映射到其他处理器上</strong>”这类问题解决起来将会异常困难，甚至不可能完成。因而使用用户线程实现的程序一般都比较复杂 ，除了以前在不支持多线程的操作系统中（如DOS）的多线程程序与少数有特殊需求的程序外，现在使用用户线程的程序越来越少了，Java、Ruby等语言都曾经使用过用户线程，最终又都放弃使用它。</p>
+<h3 id="使用用户线程加轻量级进程混合实现"><a href="#使用用户线程加轻量级进程混合实现" class="headerlink" title="使用用户线程加轻量级进程混合实现"></a>使用用户线程加轻量级进程混合实现</h3><p>线程除了依赖内核线程实现和完全由用户程序自己实现之外，还有一种将<strong>内核线程与用户线程一起使用的实现方式</strong>。在这种混合实现下，既存在用户线程，也存在轻量级进程。**<font color="#0000dd">用户线程还是完全建立在用户空间中，因此用户线程的创建、切换、析构等操作依然廉价，并且可以支持大规模的用户线程并发。而操作系统提供支持的轻量级进程则作为用户线程和内核线程之间的桥梁，这样可以使用内核提供的线程调度功能及处理器映射，并且用户线程的系统调用要通过轻量级线程来完成，大大降低了整个进程被完全阻塞的风险。</font>**在这种混合模式中，用户线程与轻量级进程的数量比是不定的，即为N：M的关系，如图12-5所示，这种就是多对多的线程模型。</p>
+<p>许多UNIX系列的操作系统，如Solaris、HP-UX等都提供了N：M的线程模型实现。</p>
+<p><img src="/images/Snipaste_2023-02-12_07-04-44.png" alt="img">￼</p>
+<h3 id="Java线程的实现"><a href="#Java线程的实现" class="headerlink" title="Java线程的实现"></a>Java线程的实现</h3><p>　　 Java线程在JDK 1.2之前，是基于称为“绿色线程”（Green Threads）的用户线程实现的，而在JDK 1.2中，线程模型替换为<strong>基于操作系统原生线程模型</strong>来实现。因此，在目前的JDK版本中，<strong>操作系统支持怎样的线程模型，在很大程度上决定了Java虚拟机的线程是怎样映射的</strong>，这点在不同的平台上没有办法达成一致，虚拟机规范中也并未限定Java线程需要使用哪种线程模型来实现。线程模型只对线程的并发规模和操作成本产生影响，对Java程序的编码和运行过程来说，这些差异都是透明的。</p>
+<p>　　对于Sun <strong>JDK</strong>来说，<strong>它的Windows版与Linux版都是使用一对一的线程模型实现的</strong>，<strong>一条Java线程就映射到一条轻量级进程之中</strong>，因为Windows和Linux系统提供的线程模型就是<strong>一对一的</strong>。</p>
+<p>　　而在Solaris平台中，由于操作系统的线程特性可以<strong>同时支持一对一</strong>（通过Bound Threads或Alternate Libthread实现）及<strong>多对多</strong>（通过LWP&#x2F;Thread Based Synchronization实现）的线程模型，因此在Solaris版的JDK中也对应提供了两个平台专有的虚拟机参数：-XX：+UseLWPSynchronization（默认值）和-XX：+UseBoundThreads来明确<strong>指定虚拟机使用哪种线程模型</strong>。 　　 Java语言则提供了在不同硬件和操作系统平台下对线程操作的统一处理，每个已经执行start（）且还未结束的java.lang.Thread类的实例就代表了一个线程。我们注意到Thread类与大部分的Java API有显著的差别，它的所有关键方法都是声明为Native的。<strong>在Java API中，一个Native方法往往意味着这个方法没有使用或无法使用平台无关的手段来实现</strong>（当然也可能是为了执行效率而使用Native方法，不过，通常最高效率的手段也就是平台相关的手段）。</p>
+<p>(参考：深入理解Java虚拟机）</p>
+<h2 id="线程状态"><a href="#线程状态" class="headerlink" title="线程状态"></a>线程状态</h2><p>线程是有状态的，并且这些状态之间也是可以互相流转的。Java中线程的状态分为6种：</p>
+<ul>
+<li>1.**初始(NEW)**：新创建了一个线程对象，但还没有调用start()方法。</li>
+<li>2.**运行(RUNNABLE)**：Java线程中将就绪（READY）和运行中（RUNNING）两种状态笼统的称为“运行”。<ul>
+<li><strong>就绪（READY）</strong>:线程对象创建后，其他线程(比如main线程）<strong>调用了该对象的start()方法</strong>。该状态的线程位于<strong>可运行线程池</strong>中，**<font color="#006600">等待被线程调度选中并分配cpu使用权 。</font>**</li>
+<li><strong>运行中（RUNNING）</strong>：就绪(READY)的线程<strong>获得了cpu 时间片</strong>，开始执行程序代码。</li>
+</ul>
+</li>
+<li>3.**阻塞(BLOCKED)**：表示线程阻塞于锁（关于锁，在后面章节会介绍）。</li>
+<li>4.**等待(WAITING)**：进入该状态的线程需要等待其他线程做出一些特定动作（通知或中断）。</li>
+<li>5.**超时等待(TIMED_WAITING)**：该状态不同于WAITING，它可以在指定的时间后自行返回。</li>
+<li>6.**终止(TERMINATED)**：表示该线程已经执行完毕。</li>
+</ul>
+<p>下图是一张线程状态的流转图：</p>
+<p><img src="/images/Snipaste_2023-02-12_07-20-17.png" alt="img"></p>
+<p>可以看到，图中的各个状态之间的流转路径上都有标注对应的Java中的方法。这些就是Java中进行线程调度的一些api。</p>
+<h2 id="线程调度"><a href="#线程调度" class="headerlink" title="线程调度"></a>线程调度</h2><p>在关于线程安全的文章中，我们提到过，<strong>对于单CPU的计算机来说，在任意时刻只能执行一条机器指令，每个线程只有获得CPU的使用权才能执行指令。</strong></p>
+<p>所谓多线程的并发运行，其实是指从宏观上看，**<font color="#006600">各个线程轮流获得CPU的使用权，分别执行各自的任务。</font>**</p>
+<p>前面关于线程状态的介绍中，我们知道，线程的运行状态中包含两种子状态，即<strong>就绪（READY）和运行中(RUNNING)。</strong></p>
+<p>而一个线程想要从就绪状态变成运行中状态，这个过程需要**<font color="#dd0000">系统调度，即给线程分配CPU的使用权，获得CPU使用权的线程才会从就绪状态变成运行状态。</font>**</p>
+<p><strong>给多个线程按照特定的机制分配CPU的使用权的过程就叫做<font color="#dd0000">线程调度</font>。</strong></p>
+<p>还记得在介绍进程和线程的区别的时候，我们提到过的一句话吗：进程是分配资源的基本单元，线程是CPU调度的基本单元。这里所说的**<font color="#0000dd">调度指的就是给其分配CPU时间片，让其执行任务</font>**。</p>
+<h3 id="Linux线程调度"><a href="#Linux线程调度" class="headerlink" title="Linux线程调度"></a>Linux线程调度</h3><p>在Linux中，线程是由进程来实现，<strong>线程就是轻量级进程</strong>（ lightweight process ），因此在Linux中，线程的调度是按照进程的调度方式来进行调度的，也就是说<strong>线程是调度单元</strong>。</p>
+<p>Linux这样实现的线程的好处的之一是：<strong>线程调度直接使用进程调度就可以了，没必要再搞一个进程内的线程调度器。</strong>在Linux中，调度器是<strong>基于线程的调度策略（</strong>scheduling policy）和<strong>静态调度优先级</strong>（static scheduling priority）来决定那个线程来运行。</p>
+<p>在Linux中，主要有三种调度策略。分别是：</p>
+<ul>
+<li>SCHED_OTHER <strong>分时调度策略</strong>，（默认的）</li>
+<li>SCHED_FIFO <strong>实时调度策略，先到先服务</strong></li>
+<li>SCHED_RR <strong>实时调度策略，时间片轮转</strong></li>
+</ul>
+<h3 id="Windows线程调度"><a href="#Windows线程调度" class="headerlink" title="Windows线程调度"></a>Windows线程调度</h3><p>Windows 采用基于<strong>优先级的、抢占调度算法</strong>来调度线程。</p>
+<p>用于处理调度的 <strong>Windows 内核部分</strong>称为调度程序，Windows 调度程序确保具有最高优先级的线程总是在运行的。由于调度程序选择运行的线程会一直运行，直到<strong>被更高优先级的线程所抢占</strong>，<strong>或终止，或时间片已到</strong>，<strong>或调用阻塞系统调用（如 I&#x2F;O）</strong>。如果在低优先级线程运行时，更高优先级的实时线程变成就绪，那么低优先级线程就被抢占。这种抢占使得<strong>实时线程在需要使用 CPU 时优先得到使用</strong>。</p>
+<h2 id="Java线程调度"><a href="#Java线程调度" class="headerlink" title="Java线程调度"></a>Java线程调度</h2><p>可以看到，不同的操作系统，有不同的线程调度策略。但是，作为一个Java开发人员来说，我们日常开发过程中一般很少关注操作系统层面的东西。</p>
+<p>主要是因为Java程序都是运行在Java虚拟机上面的，而<strong>虚拟机帮我们屏蔽了操作系统的差异，所以我们说Java是一个跨平台语言。</strong></p>
+<p><strong><font color="#0000dd">在操作系统中，一个Java程序其实就是一个进程。所以，我们说Java是单进程、多线程的！</font></strong></p>
+<p>前面关于线程的实现也介绍过，Thread类与大部分的Java API有显著的差别，它的所有<strong>关键方法都是声明为Native的</strong>，也就是说，他需要<strong>根据不同的操作系统有不同的实现。</strong></p>
+<p>在Java的多线程程序中，为保证所有线程的执行能按照一定的规则执行，<strong>JVM实现了一个线程调度器，它定义了线程调度模型</strong>，对于CPU运算的分配都进行了规定，按照这些特定的机制为多个线程分配CPU的使用权。</p>
+<p>主要有两种调度模型：<strong>协同式线程调度</strong>和<strong>抢占式调度模型</strong>。</p>
+<h3 id="协同式线程调度"><a href="#协同式线程调度" class="headerlink" title="协同式线程调度"></a>协同式线程调度</h3><p>协同式调度的多线程系统，线程的执行时间由线程本身来控制，线程把自己的工作执行完了之后，要<strong>主动通知系统切换到另外一个线程</strong>上。协同式多线程的最大好处是<strong>实现简单</strong>，而且由于线程要把自己的事情干完后才会进行线程切换，<strong>切换操作对线程自己是可知的</strong>，所以没有什么线程同步的问题。</p>
+<h3 id="抢占式调度模型"><a href="#抢占式调度模型" class="headerlink" title="抢占式调度模型"></a>抢占式调度模型</h3><p>抢占式调度的多线程系统，那么<strong>每个线程将由系统来分配执行时间，线程的切换不由线程本身来决定</strong>。在这种实现线程调度的方式下，线程的<strong>执行时间是系统可控的</strong>，也不会有<strong>一个线程导致整个进程阻塞的问题。</strong></p>
+<p>系统会让<strong>可运行池中优先级高的线程占用CPU</strong>，如果<strong>可运行池中的线程优先级相同</strong>，那么就<strong>随机选择一个线程</strong>，使其占用CPU。**<font color="#006600">处于运行状态的线程会一直运行，直至它不得不放弃CPU。</font>**</p>
+<p><strong><font color="#0000dd">Java虚拟机采用抢占式调度模型。</font></strong></p>
+<p>虽然Java线程调度是系统自动完成的，但是我们还是可以“建议”系统<strong>给某些线程多分配一点执行时间</strong>，另外的一些线程则可以少分配一点——这项操作可以通过设置<strong>线程优先级</strong>来完成。Java语言一共设置了10个级别的线程优先级（Thread.MIN_PRIORITY&#x3D;1至Thread.MAX_PRIORITY&#x3D;10）默认优先级是(Thread.NORM_PRIORITY &#x3D; 5) ，在两个线程同时处于Ready状态时，<strong>优先级越高的线程越容易被系统选择执行。</strong></p>
+<p>不过，线程优先级并不是太靠谱，原因是<strong>Java的线程是通过映射到系统的原生线程上来实现</strong>的，所以线程调度最终还是取决于操作系统，虽然现在很多操作系统都提供线程优先级的概念，但是并不见得能与Java线程的优先级一一对应。</p>
+<h1 id="三、进一步理解Java中的线程-下）"><a href="#三、进一步理解Java中的线程-下）" class="headerlink" title="三、进一步理解Java中的线程(下）"></a>三、进一步理解Java中的线程(下）</h1><p>要想真正的理解Java并发编程，线程是无论如何都必须要彻底理解的一个重要概念。那么，在开始深入介绍之前，我们先来深入的学习一下线程。前面一个章节中已经介绍过线程的一些基本知识，包括线程的特点、线程的实现、Java线程的实现、线程的状态以及线程调度。</p>
+<h2 id="本文概述"><a href="#本文概述" class="headerlink" title="本文概述"></a>本文概述</h2><p>本文主要在前一篇文章的基础上，继续介绍线程相关的知识，主要包括<strong>线程优先级、守护线程、ThreadLoacal以及线程池</strong>等。原定于本节介绍的<strong>线程间通信，需要一些基础知识铺垫</strong>，放到后面再介绍。</p>
+<h2 id="线程优先级"><a href="#线程优先级" class="headerlink" title="线程优先级"></a>线程优先级</h2><p>我们学习过，Java虚拟机采用抢占式调度模型。也就是说他会给优先级更高的线程优先分配CPU。</p>
+<p>虽然Java线程调度是系统自动完成的，但是我们还是可以“建议”系统给某些线程多分配一点执行时间，另外的一些线程则可以少分配一点——这项操作可以通过设置线程优先级来完成。</p>
+<p>Java语言一共设置了10个级别的线程优先级（Thread.MIN_PRIORITY至Thread.MAX_PRIORITY），在两个线程同时处于Ready状态时，<strong>优先级越高的线程越容易被系统选择执行。</strong></p>
+<p>Java 线程优先级使用 1 ~ 10 的整数表示。默认的优先级是5。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">最低优先级 1：Thread.MIN_PRIORITY</span><br><span class="line"></span><br><span class="line">最高优先级 10：Thread.MAX_PRIORITY</span><br><span class="line"></span><br><span class="line">普通优先级 5：Thread.NORM_PRIORITY</span><br></pre></td></tr></table></figure>
+
+<p>在Java中，可以使用Thread类的**<code>setPriority()</code>方法为线程设置了新的优先级<strong>。</strong><code>getPriority()</code>方法返回线程的当前优先级<strong>。当创建一个线程时，其</strong>默认优先级是创建该线程的线程的优先级。**</p>
+<p>以下代码演示如何设置和获取线程的优先：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Hollis</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t</span> <span class="operator">=</span> Thread.currentThread();</span><br><span class="line">        System.out.println(<span class="string">&quot;Main Thread  Priority:&quot;</span> + t.getPriority());</span><br><span class="line"></span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t1</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>();</span><br><span class="line">        System.out.println(<span class="string">&quot;Thread(t1) Priority:&quot;</span> + t1.getPriority());</span><br><span class="line">        t1.setPriority(Thread.MAX_PRIORITY - <span class="number">1</span>);</span><br><span class="line">        System.out.println(<span class="string">&quot;Thread(t1) Priority:&quot;</span> + t1.getPriority());</span><br><span class="line"></span><br><span class="line">        t.setPriority(Thread.NORM_PRIORITY);</span><br><span class="line">        System.out.println(<span class="string">&quot;Main Thread  Priority:&quot;</span> + t.getPriority());</span><br><span class="line"></span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t2</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>();</span><br><span class="line">        System.out.println(<span class="string">&quot;Thread(t2) Priority:&quot;</span> + t2.getPriority());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Change thread t2 priority to minimum</span></span><br><span class="line">        t2.setPriority(Thread.MIN_PRIORITY);</span><br><span class="line">        System.out.println(<span class="string">&quot;Thread(t2) Priority:&quot;</span> + t2.getPriority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Main Thread  Priority:<span class="number">5</span></span><br><span class="line">Thread(t1) Priority:<span class="number">5</span></span><br><span class="line">Thread(t1) Priority:<span class="number">9</span></span><br><span class="line">Main Thread  Priority:<span class="number">5</span></span><br><span class="line">Thread(t2) Priority:<span class="number">5</span></span><br><span class="line">Thread(t2) Priority:<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>在上面的代码中，<strong>Java虚拟机启动时，就会通过main方法启动一个线程</strong>，JVM就会一直运行下去，直到以下任意一个条件发生：</p>
+<ul>
+<li>调用了<strong>exit()方法</strong>，并且<strong>exit()有权限被正常执行</strong>。</li>
+<li>所有的<strong>“非守护线程”都死了(即JVM中仅仅只有“守护线程”)。</strong></li>
+</ul>
+<p>关于exit，我们在后面的文章中再进行介绍，这里我们先来看看什么是守护线程。</p>
+<h2 id="守护线程"><a href="#守护线程" class="headerlink" title="守护线程"></a>守护线程</h2><p>在Java中有两类线程：**<font color="#006600">User Thread(用户线程)、Daemon Thread(守护线程) </font><strong>。用户线程一般用户执行用户级任务，而守护线程也就是“后台线程”，一般用来执行后台任务，守护线程最典型的应用就是</strong>GC(垃圾回收器)。**</p>
+<p>这两种线程其实是没有什么区别的，唯一的区别就是<strong>Java虚拟机在所有“用户线程”都结束后就会退出。</strong></p>
+<p>我们可以通过使用**<code>setDaemon()</code>方法通过传递true作为参数，使线程成为一个守护线程**。我们必须在启动线程之前调用一个线程的<code>setDaemon()</code>方法。否则，就会抛出一个<code>java.lang.IllegalThreadStateException</code>。</p>
+<p>可以使用**<code>isDaemon()</code>方法来检查线程是否是守护线程**。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Hollis</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="type">Thread</span> <span class="variable">t1</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>();</span><br><span class="line">        System.out.println(t1.isDaemon());</span><br><span class="line">        t1.setDaemon(<span class="literal">true</span>);</span><br><span class="line">        System.out.println(t1.isDaemon());</span><br><span class="line">        t1.start(); <span class="comment">// 线程启动之后就不能在调用setDaemon了！</span></span><br><span class="line">        t1.setDaemon(<span class="literal">false</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上代码输出结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">false</span><br><span class="line">true</span><br><span class="line">Exception in thread &quot;main&quot; java.lang.IllegalThreadStateException</span><br><span class="line">    at java.lang.Thread.setDaemon(Thread.java:1359)</span><br><span class="line">    at com.hollis.Main.main(Main.java:16)</span><br></pre></td></tr></table></figure>
+
+<p>我们提到，<strong>当JVM中只剩下守护线程的时候，JVM就会退出，</strong>那么写一段代码测试下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Hollis</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="type">Thread</span> <span class="variable">childThread</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>(<span class="keyword">new</span> <span class="title class_">Runnable</span>() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">                <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                    System.out.println(<span class="string">&quot;I&#x27;m child thread..&quot;</span>);</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        TimeUnit.MILLISECONDS.sleep(<span class="number">1000</span>);</span><br><span class="line">                    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                        e.printStackTrace();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        childThread.start();</span><br><span class="line">        System.out.println(<span class="string">&quot;I&#x27;m main thread...&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上代码中，我们在Main线程中开启了一个子线程，在并没有显示将其设置为守护线程的情况下，他是一个用户线程，代码比较好理解，就是子线程处于一个while(true)循环中，每隔一秒打印一次<code>I&#39;m child thread..</code></p>
+<p>输出结果为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">I&#x27;m main thread...</span><br><span class="line">I&#x27;m child thread..</span><br><span class="line">I&#x27;m child thread..</span><br><span class="line">.....</span><br><span class="line">I&#x27;m child thread..</span><br><span class="line">I&#x27;m child thread..</span><br></pre></td></tr></table></figure>
+
+<p>我们再把子线程设置成守护线程，重新运行以上代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Hollis</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="type">Thread</span> <span class="variable">childThread</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>(<span class="keyword">new</span> <span class="title class_">Runnable</span>() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">                <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                    System.out.println(<span class="string">&quot;I&#x27;m child thread..&quot;</span>);</span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        TimeUnit.MILLISECONDS.sleep(<span class="number">1000</span>);</span><br><span class="line">                    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                        e.printStackTrace();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        childThread.setDaemon(<span class="literal">true</span>);</span><br><span class="line">        childThread.start();</span><br><span class="line">        System.out.println(<span class="string">&quot;I&#x27;m main thread...&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上代码，我们通过<code>childThread.setDaemon(true);</code>把子线程设置成守护线程，然后运行，得到以下结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">I&#x27;m main thread...</span><br><span class="line">I&#x27;m child thread..</span><br></pre></td></tr></table></figure>
+
+<p>子线程只打印了一次，也就是，在<strong>main线程执行结束后，由于子线程是一个守护线程，JVM就会直接退出了。</strong></p>
+<p><strong>值得注意的是，在Daemon线程中产生的新线程也是Daemon的。</strong></p>
+<p>提到线程，有一个很重要的东西我们需要介绍一下，那就是ThreadLocal。</p>
+<h2 id="ThreadLocal"><a href="#ThreadLocal" class="headerlink" title="ThreadLocal"></a>ThreadLocal</h2><p><strong>ThreadLocal是java.lang下面的一个类</strong>，是**<font color="#0000dd">用来解决java多线程程序中并发问题</font><strong>的一种途径；</strong><font color="#0000dd">通过为每一个线程创建一份共享变量的副本来保证各个线程之间的变量的访问和修改互相不影响</font>**；</p>
+<p><strong>ThreadLocal存放的值是<font color="#dd0000">线程内共享的，线程间互斥的</font><strong>，主要</strong>用于线程内共享一些数据，避免通过参数来传递</strong>，这样处理后，能够优雅的解决一些实际问题。</p>
+<p>比如<strong>一次用户的页面操作请求</strong>，我们可以在最开始的filter中，<strong>把用户的信息保存在ThreadLocal中</strong>，**<font color="#0000dd">在同一次请求中</font><strong>，</strong>在使用到用户信息，就可以直接到ThreadLocal中获取就可以了。**</p>
+<p>还有一个典型的应用就是**<font color="#0000dd">保存数据库连接</font><strong>，我们可以在</strong>第一次初始化Connection的时候，把他保存在ThreadLocal中。**</p>
+<p>ThreadLocal有四个方法，分别为：</p>
+<ul>
+<li><strong>initialValue</strong><ul>
+<li>返回<strong>此线程局部变量的初始值</strong></li>
+</ul>
+</li>
+<li><strong>get</strong><ul>
+<li>返回<strong>此线程局部变量的当前线程副本中的值</strong>。如果这是线程第一次调用该方法，则创建并初始化此副本。</li>
+</ul>
+</li>
+<li><strong>set</strong><ul>
+<li>将<strong>此线程局部变量的当前线程副本中的值设置为指定值</strong>。许多应用程序不需要这项功能，它们只依赖于 <strong>initialValue</strong>() 方法来设置线程局部变量的值。</li>
+</ul>
+</li>
+<li><strong>remove</strong><ul>
+<li>移除此线程局部变量的值。</li>
+</ul>
+</li>
+</ul>
+<p>Hibernate中的<strong>OpenSessionInView</strong>，就是<strong>使用ThreadLocal保存Session对象</strong>，还有我们经常<strong>用ThreadLocal存放Connection</strong>，代码如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** </span></span><br><span class="line"><span class="comment">* 数据库连接管理类 </span></span><br><span class="line"><span class="comment">*/</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ConnectionManager</span> &#123;  </span><br><span class="line"></span><br><span class="line">  <span class="comment">/** 线程内共享Connection，ThreadLocal通常是全局的，支持泛型 */</span>  </span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="type">ThreadLocal</span> <span class="variable">threadLocal</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ThreadLocal</span>();  </span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> Connection <span class="title function_">getCurrConnection</span><span class="params">()</span> &#123;  </span><br><span class="line">      <span class="comment">// 获取当前线程内共享的Connection  </span></span><br><span class="line">      <span class="type">Connection</span> <span class="variable">conn</span> <span class="operator">=</span> threadLocal.get();  </span><br><span class="line">      <span class="keyword">try</span> &#123;  </span><br><span class="line">          <span class="comment">// 判断连接是否可用  </span></span><br><span class="line">          <span class="keyword">if</span>(conn == <span class="literal">null</span> || conn.isClosed()) &#123;  </span><br><span class="line">              <span class="comment">// 创建新的Connection赋值给conn(略)  </span></span><br><span class="line">              <span class="comment">// 保存Connection  </span></span><br><span class="line">              threadLocal.set(conn);  </span><br><span class="line">          &#125;  </span><br><span class="line">      &#125; <span class="keyword">catch</span> (SQLException e) &#123;  </span><br><span class="line">          <span class="comment">// 异常处理  </span></span><br><span class="line">      &#125;  </span><br><span class="line">      <span class="keyword">return</span> conn;  </span><br><span class="line">  &#125;  </span><br><span class="line"></span><br><span class="line">  <span class="comment">/** </span></span><br><span class="line"><span class="comment">   * 关闭当前数据库连接 </span></span><br><span class="line"><span class="comment">   */</span>  </span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">close</span><span class="params">()</span> &#123;  </span><br><span class="line">      <span class="comment">// 获取当前线程内共享的Connection  </span></span><br><span class="line">      <span class="type">Connection</span> <span class="variable">conn</span> <span class="operator">=</span> threadLocal.get();  </span><br><span class="line">      <span class="keyword">try</span> &#123;  </span><br><span class="line">          <span class="comment">// 判断是否已经关闭  </span></span><br><span class="line">          <span class="keyword">if</span>(conn != <span class="literal">null</span> &amp;&amp; !conn.isClosed()) &#123;  </span><br><span class="line">              <span class="comment">// 关闭资源  </span></span><br><span class="line">              conn.close();  </span><br><span class="line">              <span class="comment">// 移除Connection  </span></span><br><span class="line">              threadLocal.remove();  </span><br><span class="line">              conn = <span class="literal">null</span>;  </span><br><span class="line">          &#125;  </span><br><span class="line">      &#125; <span class="keyword">catch</span> (SQLException e) &#123;  </span><br><span class="line">          <span class="comment">// 异常处理  </span></span><br><span class="line">      &#125;  </span><br><span class="line">  &#125;  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+
+<p>本来想介绍一下ThreadLocal的原理，不过我在网上找到一篇不错的文章：<a target="_blank" rel="noopener" href="http://www.jasongj.com/java/threadlocal/">http://www.jasongj.com/java/threadlocal/</a> ，大家可以去看下。</p>
+<p>前面介绍过了很多关于线程的基本知识，线程是我们在Java开发中经常遇到的，但是，线程虽然比进程更加轻量级，但是频繁的创建和销毁还是会有很多开销的。为了解决这样的问题，有一种技术就诞生了，那就是——池化技术。</p>
+<h2 id="池化技术"><a href="#池化技术" class="headerlink" title="池化技术"></a>池化技术</h2><p>前面提到一个名词——池化技术，那么到底什么是池化技术呢？</p>
+<p>池化技术简单点来说，就是<strong>提前保存大量的资源，以备不时之需</strong>。在机器资源有限的情况下，使用池化技术可以大大的<strong>提高资源的利用率，提升性能</strong>等。</p>
+<p>在编程领域，比较典型的池化技术有：</p>
+<p><strong>线程池、连接池、内存池、对象池等</strong>。</p>
+<h3 id="线程池"><a href="#线程池" class="headerlink" title="线程池"></a>线程池</h3><p>一种线程使用模式。<strong>线程过多会带来调度开销</strong>，进而影响缓存局部性和整体性能。而线程池维护着多个线程，等待着监督管理者分配可并发执行的任务。<strong>这避免了在处理短时间任务时创建与销毁线程的代价</strong>。</p>
+<p>线程池不仅能够保证<strong>内核的充分利用，还能防止过分调度</strong>。可用线程数量应该取决于可用的并发处理器、处理器内核、内存、网络sockets等的数量。 例如，<strong>线程数一般取cpu数量+2比较合适</strong>，线程数过多会导致额外的<strong>线程切换开销</strong>。</p>
+<p>关于线程池部分，后面还会有章节单独介绍其原理和正确的使用姿势。目前大家只要记住，使用线程池可以大大的节省开销就好了。</p>
+<h1 id="四、创建线程的多种方式"><a href="#四、创建线程的多种方式" class="headerlink" title="四、创建线程的多种方式"></a>四、创建线程的多种方式</h1><p>在前面的章节中，我们介绍了和线程安全有关的概念，我们知道，线程是执行的基本单元。同一个进程中可以包含多个线程。</p>
+<h2 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h2><ul>
+<li>1、线程的特点<ul>
+<li>在多线程操作系统中，通常是在一个进程中包括多个线程，<strong>每个线程都是作为利用CPU的基本单位，是花费最小开销的实体。</strong>是一个独立调度和分派的基本单位，<strong>可并发执行并且是共享进程资源的。</strong></li>
+</ul>
+</li>
+<li>2、线程的实现<ul>
+<li>主流的操作系统都提供了线程实现，实现线程主要有3种方式：使用<strong>内核线程实现</strong>、使用用户线程实现和使用<strong>用户线程加轻量级进程混合实现。</strong></li>
+</ul>
+</li>
+<li>3、Java线程的实现<ul>
+<li>Java线程在<strong>JDK 1.2之前</strong>，是基于称为<strong>“绿色线程”（Green Threads）的用户线程</strong>实现的，而在JDK 1.2中，线程模型替换为<strong>基于操作系统原生线程模型</strong>来实现。</li>
+<li>在<strong>目前的JDK版本</strong>中，<strong>操作系统支持怎样的线程模型，在很大程度上决定了Java虚拟机的线程是怎样映射的</strong>，这点在<strong>不同的平台上没有办法达成一致</strong>，虚拟机规范中也并<strong>未限定Java线程需要使用哪种线程模型</strong>来实现。</li>
+</ul>
+</li>
+<li>4、线程状态<ul>
+<li>线程是有状态的，并且这些状态之间也是可以互相流转的。Java中线程的状态分为6种：<strong>初始(NEW)、运行(RUNNABLE)、阻塞(BLOCKED)、等待(WAITING)、超时等待(TIMED_WAITING)和终止(TERMINATED)。</strong></li>
+<li>其中<strong>运行(RUNNABLE)包含两种子状态，分别是就绪（READY）和运行中（RUNNING）</strong></li>
+</ul>
+</li>
+<li>5、线程调度<ul>
+<li>一个线程想要从就绪状态变成运行中状态，这个过程需要<strong>系统调度，即给线程分配CPU的使用权</strong>，获得CPU使用权的线程才会从就绪状态变成运行状态。给多个线程按照特定的机制<strong>分配CPU的使用权的过程就叫做线程调度。</strong></li>
+<li>不同的操作系统，有不同的线程调度策略。Java程序都是运行在Java虚拟机上面的，而虚拟机帮我们屏蔽了操作系统的差异。在Java的多线程程序中，<strong>为保证所有线程的执行能按照一定的规则执行，JVM实现了一个线程调度器</strong>，它定义了线程调度模型，对于CPU运算的分配都进行了规定，按照这些特定的机制为多个线程分配CPU的使用权。</li>
+<li>主要有两种调度模型：协同式线程调度和抢占式调度模型。<strong>Java虚拟机采用抢占式调度模型</strong>。</li>
+</ul>
+</li>
+<li>6、线程优先级<ul>
+<li>虽然Java线程调度是系统自动完成的，但是我们还是可以通过设置优先级来“建议”系统给某些线程多分配一点执行时间，另外的一些线程则可以少分配一点</li>
+<li>Java语言一共设置了10个级别的线程优先级（Thread.MIN_PRIORITY至Thread.MAX_PRIORITY），可以使用Thread类的**setPriority()**方法为线程设置了新的优先级。getPriority()方法返回线程的当前优先级。</li>
+</ul>
+</li>
+<li>7、Daemon Thread<ul>
+<li>在Java中有两类线程：User Thread(用户线程)、Daemon Thread(守护线程) 。守护线程也就是“后台线程”，一般用来执行后台任务，守护线程最典型的应用就是<strong>GC(垃圾回收器)。</strong></li>
+<li>可以通过使用setDaemon()方法通过传递true作为参数，可以使用isDaemon()方法来检查线程是否是守护线程。</li>
+<li>Java虚拟机在所有“用户线程”都结束后就会退出。不会等待守护线程的执行。</li>
+</ul>
+</li>
+<li>8、ThreadLocal<ul>
+<li>ThreadLocal存放的值是<strong>线程内共享的，线程间互斥的</strong>，主要<strong>用于线程内共享一些数据，避免通过参数来传递</strong>，这样处理后，能够优雅的解决一些实际问题。</li>
+</ul>
+</li>
+<li>9、线程池<ul>
+<li>线程过多会带来调度开销，进而影响缓存局部性和整体性能。而线程池维护着多个线程，等待着监督管理者分配可并发执行的任务。这避免了在处理短时间任务时创建与销毁线程的代价。</li>
+</ul>
+</li>
+</ul>
+<h3 id="本文概述-1"><a href="#本文概述-1" class="headerlink" title="本文概述"></a>本文概述</h3><p>在Java语言中，当我们运行一个main方法的时候，就会创建一个main线程。那么，如何在Java中实现多线程呢？或者说，除了main线程以外，开发者如何创建出更多的线程的？</p>
+<h3 id="线程实现方法"><a href="#线程实现方法" class="headerlink" title="线程实现方法"></a>线程实现方法</h3><p>前面区分开了进程和线程之后，我们也就知道了，线程是执行的基本单元。同一个进程中可以包含多个线程。</p>
+<p>在Java语言中，当我们运行一个main方法的时候，就会创建一个main线程。在Java中，共有四种方式可以创建线程，分别是继承Thread类创建线程、实现Runnable接口创建线程、通过Callable和FutureTask创建线程以及通过线程池创建线程。</p>
+<h3 id="继承Thread类创建线程"><a href="#继承Thread类创建线程" class="headerlink" title="继承Thread类创建线程"></a>继承Thread类创建线程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * @author Hollis</span><br><span class="line"> */</span><br><span class="line">public class MultiThreads &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws InterruptedException &#123;</span><br><span class="line">        System.out.println(Thread.currentThread().getName());</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;继承Thread类创建线程&quot;);</span><br><span class="line">        SubClassThread subClassThread = new SubClassThread();</span><br><span class="line">        subClassThread.start();  </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class SubClassThread extends Thread &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        System.out.println(getName());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">main</span><br><span class="line">继承Thread类创建线程</span><br><span class="line">Thread-0</span><br></pre></td></tr></table></figure>
+
+<p>SubClassThread是一个继承了Thread类的子类，继承Thread类，并重写其中的run方法。然后new 一个SubClassThread的对象，并调用其start方法，即可启动一个线程。之后就会运行run中的代码。</p>
+<p>每个线程都是通过某个特定Thread对象所对应的方法<code>run()</code>来完成其操作的，方法<code>run()</code>称为线程体。通过调用Thread类的<code>start()</code>方法来启动一个线程。</p>
+<p>在主线程中，调用了子线程的<code>start()</code>方法后，主线程无需等待子线程的执行，即可执行后续的代码。而子线程便会开始执行其<code>run()</code>方法。</p>
+<p>当然，<code>run()</code>方法也是一个公有方法，在main函数中也可以直接调用这个方法，但是直接调用<code>run()</code>的话，主线程就需要等待其执行完，这种情况下，<code>run()</code>就是一个普通方法。</p>
+<p>如果读者感兴趣的话，查看一下前面介绍的Thread的源码，就可以发现，他继承了一个接口，那就是<code>java.lang.Runnable</code>，其实，开发者在代码中也可以直接通过这个接口创建一个新的线程。</p>
+<h3 id="实现Runnable接口创建线程"><a href="#实现Runnable接口创建线程" class="headerlink" title="实现Runnable接口创建线程"></a>实现Runnable接口创建线程</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public class MultiThreads &#123;</span><br><span class="line">    public static void main(String[] args) throws InterruptedException &#123;</span><br><span class="line">        System.out.println(Thread.currentThread().getName());</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;实现Runnable接口创建线程&quot;);</span><br><span class="line">        RunnableThread runnableThread = new RunnableThread();</span><br><span class="line">        new Thread(runnableThread).start();</span><br><span class="line"></span><br><span class="line">      &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class RunnableThread implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        System.out.println(Thread.currentThread().getName());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">main</span><br><span class="line">实现Runnable接口创建线程</span><br><span class="line">Thread-1</span><br></pre></td></tr></table></figure>
+
+<p>通过实现接口，同样覆盖<code>run()</code>就可以创建一个新的线程了。</p>
+<p>我们都知道，Java是不支持多继承的，所以，使用Runnbale接口的形式，就可以避免要多继承 。比如有一个类A，已经继承了类B，就无法再继承Thread类了，这时候要想实现多线程，就需要使用Runnable接口了。</p>
+<p>除此之外，两者之间几乎无差别。</p>
+<p>但是，这两种创建线程的方式，其实是有一个缺点的，那就是：在执行完任务之后无法获取执行结果。</p>
+<p>如果我们希望再主线程中得到子线程的执行结果的话，就需要用到Callable和FutureTask</p>
+<h3 id="通过Callable和FutureTask创建线程"><a href="#通过Callable和FutureTask创建线程" class="headerlink" title="通过Callable和FutureTask创建线程"></a>通过Callable和FutureTask创建线程</h3><p>自从Java 1.5开始，提供了Callable和Future，通过它们可以在任务执行完毕之后得到任务执行结果。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public class MultiThreads &#123;</span><br><span class="line">    public static void main(String[] args) throws InterruptedException &#123;</span><br><span class="line">        CallableThread callableThread = new CallableThread();</span><br><span class="line">        FutureTask futureTask = new FutureTask&lt;&gt;(callableThread);</span><br><span class="line">        new Thread(futureTask).start();</span><br><span class="line">        System.out.println(futureTask.get());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class CallableThread implements Callable &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public Object call() throws Exception &#123;</span><br><span class="line">        System.out.println(Thread.currentThread().getName());</span><br><span class="line">        return &quot;Hollis&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">main</span><br><span class="line">通过Callable和FutureTask创建线程</span><br><span class="line">Thread-2</span><br><span class="line">Hollis</span><br></pre></td></tr></table></figure>
+
+<p>Callable位于java.util.concurrent包下，它也是一个接口，在它里面也只声明了一个方法，只不过这个方法call()，和Runnable接口中的run()方法不同的是，call()方法有返回值。</p>
+<p>以上代码中，我们在CallableThread的call方法中返回字符串”Hollis”，在主线程是可以获取到的。</p>
+<p>FutureTask可用于异步获取执行结果或取消执行任务的场景。通过传入Callable的任务给FutureTask，直接调用其run方法或者放入线程池执行，之后可以在外部通过FutureTask的get方法异步获取执行结果，因此，FutureTask非常适合用于耗时的计算，主线程可以在完成自己的任务后，再去获取结果。</p>
+<p>另外，FutureTask还可以确保即使调用了多次run方法，它都只会执行一次Runnable或者Callable任务，或者通过cancel取消FutureTask的执行等。</p>
+<p>值得注意的是，<code>futureTask.get()</code>会阻塞主线程，一直等子线程执行完并返回后才能继续执行主线程后面的代码。</p>
+<p>一般，在Callable执行完之前的这段时间，主线程可以先去做一些其他的事情，事情都做完之后，再获取Callable的返回结果。可以通过<code>isDone()</code>来判断子线程是否执行完。</p>
+<p>以上代码改造下就是如下内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public class MultiThreads &#123;</span><br><span class="line">    public static void main(String[] args) throws InterruptedException &#123;</span><br><span class="line">        CallableThread callableThread = new CallableThread();</span><br><span class="line">        FutureTask futureTask = new FutureTask&lt;&gt;(callableThread);</span><br><span class="line">        new Thread(futureTask).start();</span><br><span class="line"></span><br><span class="line">        System.out.println(&quot;主线程先做其他重要的事情&quot;);</span><br><span class="line">        if(!futureTask.isDone())&#123;</span><br><span class="line">            // 继续做其他事儿</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(future.get()); // 可能会阻塞等待结果</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一般，我们会把Callable放到线程池中，然后让线程池去执行Callable中的代码。关于线程池前面介绍过了，是一种避免重复创建线程的开销的技术手段，线程池也可以用来创建线程。</p>
+<h3 id="通过线程池创建线程"><a href="#通过线程池创建线程" class="headerlink" title="通过线程池创建线程"></a>通过线程池创建线程</h3><p>Java中提供了对线程池的支持，有很多种方式。Jdk提供给外部的接口也很简单。直接调用ThreadPoolExecutor构造一个就可以了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public class MultiThreads &#123;</span><br><span class="line">    public static void main(String[] args) throws InterruptedException, ExecutionException &#123;</span><br><span class="line">        System.out.println(Thread.currentThread().getName());</span><br><span class="line">        System.out.println(&quot;通过线程池创建线程&quot;);</span><br><span class="line">        ExecutorService executorService = new ThreadPoolExecutor(1, 1, 60L, TimeUnit.SECONDS,</span><br><span class="line">            new ArrayBlockingQueue&lt;Runnable&gt;(10));</span><br><span class="line">        executorService.execute(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                System.out.println(Thread.currentThread().getName());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">main</span><br><span class="line">通过线程池创建线程</span><br><span class="line">pool-1-thread-1</span><br></pre></td></tr></table></figure>
+
+<p>所谓线程池本质是一个hashSet。多余的任务会放在阻塞队列中。</p>
+<p>线程池的创建方式其实也有很多，也可以通过Executors静态工厂构建，但一般不建议。建议使用线程池来创建线程，并且建议使用带有ThreadFactory参数的ThreadPoolExecutor（需要依赖guava）构造方法设置线程名字，具体原因我们在后面的章节中在详细介绍。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://issac2e.github.io">issac</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://issac2e.github.io/2022/02/16/JUC/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/">https://issac2e.github.io/2022/02/16/JUC/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/JUC/">JUC</a></div><div class="post_share"><div class="social-share" data-image="/./img/avatar.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-full"><a href="/2022/10/16/java%E5%9F%BA%E7%A1%80/%E6%95%B4%E7%90%86%E4%B8%80%E4%B8%8Bdecimal/" title="decimal整理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">decimal整理</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2023/01/16/JUC/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82JUC/" title="彻底搞懂JUC"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-01-16</div><div class="title">彻底搞懂JUC</div></div></a></div><div><a href="/2023/01/17/%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E7%88%B6%E5%AD%90%E7%BA%BF%E7%A8%8B%E6%80%8E%E4%B9%88%E5%85%B1%E4%BA%AB%E6%95%B0%E6%8D%AE/" title="父子线程怎么共享数据"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-01-17</div><div class="title">父子线程怎么共享数据</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/./img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">issac</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">13</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">7</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/issac2e"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/issac2e" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:issac2e@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">哈哈哈哈哈哈哈哈</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8"><span class="toc-text">一、什么是线程安全</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B6%E5%8F%91"><span class="toc-text">并发</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%B9%B6%E5%8F%91"><span class="toc-text">什么是并发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%B6%E5%8F%91%E4%B8%8E%E5%B9%B6%E8%A1%8C%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">并发与并行之间的关系</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%BA%BF%E7%A8%8B"><span class="toc-text">多线程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E5%92%8C%E7%BA%BF%E7%A8%8B"><span class="toc-text">进程和线程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B1%E4%BA%AB%E5%8F%98%E9%87%8F"><span class="toc-text">共享变量</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B1%BB%E5%8F%98%E9%87%8F%E3%80%81%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E5%92%8C%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F"><span class="toc-text">类变量、成员变量和局部变量</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-text">小结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%BF%9B%E4%B8%80%E6%AD%A5%E7%90%86%E8%A7%A3Java%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B-%E4%B8%8A%EF%BC%89"><span class="toc-text">二、进一步理解Java中的线程(上）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-text">线程的特点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BD%BB%E5%9E%8B%E5%AE%9E%E4%BD%93"><span class="toc-text">轻型实体</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8B%AC%E7%AB%8B%E8%B0%83%E5%BA%A6%E5%92%8C%E5%88%86%E6%B4%BE%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%8D%95%E4%BD%8D%E3%80%82"><span class="toc-text">独立调度和分派的基本单位。</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E5%B9%B6%E5%8F%91%E6%89%A7%E8%A1%8C%E3%80%82"><span class="toc-text">可并发执行。</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B1%E4%BA%AB%E8%BF%9B%E7%A8%8B%E8%B5%84%E6%BA%90%E3%80%82"><span class="toc-text">共享进程资源。</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">线程的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%86%85%E6%A0%B8%E7%BA%BF%E7%A8%8B%E5%AE%9E%E7%8E%B0"><span class="toc-text">使用内核线程实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%94%A8%E6%88%B7%E7%BA%BF%E7%A8%8B%E5%AE%9E%E7%8E%B0"><span class="toc-text">使用用户线程实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%94%A8%E6%88%B7%E7%BA%BF%E7%A8%8B%E5%8A%A0%E8%BD%BB%E9%87%8F%E7%BA%A7%E8%BF%9B%E7%A8%8B%E6%B7%B7%E5%90%88%E5%AE%9E%E7%8E%B0"><span class="toc-text">使用用户线程加轻量级进程混合实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Java%E7%BA%BF%E7%A8%8B%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">Java线程的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81"><span class="toc-text">线程状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="toc-text">线程调度</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux%E7%BA%BF%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="toc-text">Linux线程调度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Windows%E7%BA%BF%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="toc-text">Windows线程调度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java%E7%BA%BF%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="toc-text">Java线程调度</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E5%90%8C%E5%BC%8F%E7%BA%BF%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="toc-text">协同式线程调度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6%E6%A8%A1%E5%9E%8B"><span class="toc-text">抢占式调度模型</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E8%BF%9B%E4%B8%80%E6%AD%A5%E7%90%86%E8%A7%A3Java%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B-%E4%B8%8B%EF%BC%89"><span class="toc-text">三、进一步理解Java中的线程(下）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AC%E6%96%87%E6%A6%82%E8%BF%B0"><span class="toc-text">本文概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-text">线程优先级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%88%E6%8A%A4%E7%BA%BF%E7%A8%8B"><span class="toc-text">守护线程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ThreadLocal"><span class="toc-text">ThreadLocal</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B1%A0%E5%8C%96%E6%8A%80%E6%9C%AF"><span class="toc-text">池化技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="toc-text">线程池</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B%E7%9A%84%E5%A4%9A%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="toc-text">四、创建线程的多种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="toc-text">前情提要</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E6%96%87%E6%A6%82%E8%BF%B0-1"><span class="toc-text">本文概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95"><span class="toc-text">线程实现方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%A7%E6%89%BFThread%E7%B1%BB%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B"><span class="toc-text">继承Thread类创建线程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0Runnable%E6%8E%A5%E5%8F%A3%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B"><span class="toc-text">实现Runnable接口创建线程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87Callable%E5%92%8CFutureTask%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B"><span class="toc-text">通过Callable和FutureTask创建线程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B"><span class="toc-text">通过线程池创建线程</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/02/07/linux/linux/" title="No title">No title</a><time datetime="2023-02-07T16:56:51.667Z" title="Created 2023-02-07 16:56:51">2023-02-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/02/07/%E5%A4%9A%E7%BA%BF%E7%A8%8B/%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E4%B9%8B%20-%20ThreadLocal/" title="No title">No title</a><time datetime="2023-02-07T11:10:51.566Z" title="Created 2023-02-07 11:10:51">2023-02-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/02/06/Redis/Redis%20%E9%9B%AA%E5%B4%A9%E3%80%81%E5%87%BB%E7%A9%BF%E3%80%81%E7%A9%BF%E9%80%8F%E3%80%81%E9%A2%84%E7%83%AD%E3%80%81%E9%99%8D%E7%BA%A7/" title="Redis 雪崩、击穿、穿透、预热、降级">Redis 雪崩、击穿、穿透、预热、降级</a><time datetime="2023-02-06T22:36:08.000Z" title="Created 2023-02-06 22:36:08">2023-02-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/01/20/io/io%E5%AD%97%E5%85%B8/" title="io字典">io字典</a><time datetime="2023-01-20T21:36:08.000Z" title="Created 2023-01-20 21:36:08">2023-01-20</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/01/18/%E5%A4%9A%E7%BA%BF%E7%A8%8B/Go%E8%AF%AD%E8%A8%80%E5%8D%8F%E7%A8%8B%E7%9A%84%E6%A6%82%E5%BF%B5%E5%92%8C%E8%B0%83%E5%BA%A6%E6%A8%A1%E5%9E%8B/" title="进程、线程、协程区别">进程、线程、协程区别</a><time datetime="2023-01-18T22:36:08.000Z" title="Created 2023-01-18 22:36:08">2023-01-18</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2023 By issac</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
