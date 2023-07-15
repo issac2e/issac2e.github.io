@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="zh_CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"><title>topK问题 | 日拱一卒</title><meta name="author" content="issac"><meta name="copyright" content="issac"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="topK问题问法：  100T数据，在4C8G的机器中如何找到出现频率最高的单词 1G文件中每个词的大小不超过16字节，内存限制大小是1M。返回频数最高的100个词 100T数据，全是数字，返回出现频率最高的100个数字 10亿个商品数据，找出前1000大的数据。  1、排序，O(n)通过hashM"><link rel="shortcut icon" href="/img/kid.png"><link rel="canonical" href="https://issac2e.github.io/2022/10/15/%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0/topK/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  }
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'topK问题',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-07-14 20:32:23'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = url => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      link.onload = () => resolve()
+      link.onerror = () => reject()
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/./img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">18</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">10</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/./img/preview5.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="日拱一卒"><span class="site-name">日拱一卒</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">topK问题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2022-10-15T08:32:28.000Z" title="Created 2022-10-15 16:32:28">2022-10-15</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2023-07-14T12:32:23.921Z" title="Updated 2023-07-14 20:32:23">2023-07-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%AE%97%E6%B3%95/">算法</a></span></div><div class="meta-secondline"></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="topK问题"><a href="#topK问题" class="headerlink" title="topK问题"></a>topK问题</h1><p><strong>问法：</strong></p>
+<ul>
+<li>100T数据，在4C8G的机器中如何找到出现<strong>频率最高</strong>的单词</li>
+<li>1G文件中每个词的大小不超过16字节，内存限制大小是1M。返回<strong>频数最高</strong>的100个词</li>
+<li>100T数据，全是数字，返回出现<strong>频率最高</strong>的100个数字</li>
+<li>10亿个商品数据，找出<strong>前1000大</strong>的数据。</li>
+</ul>
+<h2 id="1、排序，O-n"><a href="#1、排序，O-n" class="headerlink" title="1、排序，O(n)"></a>1、排序，O(n)</h2><p>通过hashMap获取到每个文件中出现频率topK的数</p>
+<h2 id="2、分治思想，O-n"><a href="#2、分治思想，O-n" class="headerlink" title="2、分治思想，O(n)"></a>2、分治思想，O(n)</h2><p>分治 ，分区操作找出Topk元素</p>
+<p>100T * 1000G&#x2F;T &#x2F;8G &#x3D; 12500 个文件。 因为只有8G内存。</p>
+<p>先将100T数据的单词对12500取模，拆分成12500个文件。这样能保证<strong>相同的单词一定会到同一个文件</strong>当中。（如果某个单词累计后的size超过8G，就需要重新rehash取模拆分文件）</p>
+<p><strong><font color="#0000dd">进阶：</font></strong></p>
+<p>类似快排中的partition分区的操作，随机选一个数t（一般是第一个元素），然后堆整个数组进行partition，会得到两部分，前一部分的数都是大于t的，后一部分都是小于t的。</p>
+<p>如果说钱一部分的总数大于1000个，那就继续在前一部分进行partition寻找，如果说前一部分的数小于1000那就在后一部分进行寻找，寻找剩余的数。【利用分治法对左边或右边进行partition】</p>
+<p>partition的过程时间是O(n)，我们在第一次进行partition的时候花费n，每次数据减半，第二次n&#x2F;2，第三次n&#x2F;4。。总的时间复杂度一定小于2n。</p>
+<p>**<font color="#0000dd">如果计算机内存2G。你如何partition？</font>**1G &#x3D; 1024 MB &#x3D; 1024 * 1024 * 1024 byte</p>
+<p>10亿数据，int 4字节。 (4 * 10^10)byte &#x2F; 1024 * 1024 * 1024 &#x3D; 37 G 放不下的。</p>
+<p>partition后可以将数据读取后分别写入几个文件，然后第二次再从其中一个文件读出来进行partition。 <strong><font color="#dd0000">这样的话 就得进行多次磁盘的读取和写入！效率很低！！</font></strong></p>
+<p><strong><font color="#0000dd">分布式思想，将数据切分，然后在多台机器上分别计算出前1000大的数，然后对这些数据进行汇总！</font></strong></p>
+<p><strong>如果只有一台机器？</strong></p>
+<h2 id="3、归并-amp-堆的应用，O-n-logk"><a href="#3、归并-amp-堆的应用，O-n-logk" class="headerlink" title="3、归并&amp;堆的应用，O(n*logk)"></a>3、归并&amp;堆的应用，O(n*logk)</h2><p>不排序， </p>
+<ol>
+<li>依次遍历每个小文件的topK，构建<strong>容量为k的小顶堆（小顶堆就是头节点是整个堆中最小的元素，堆满时如果比堆顶元素还小，丢掉；如果来的数比堆顶大，那就入堆，堆顶元素出去。调整堆）</strong>，当文件遍历完成时，<strong>小顶堆即为所求topK</strong></li>
+<li>或者对<strong>子文件进行归并排序</strong>，排序完成后取topK即可</li>
+</ol>
+<p><strong>计数排序（或称桶排序）</strong>，当元素的值域限定在一定范围时，也可以使用这种方法，也是O(n)的时间复杂度，但不是通用解法。</p>
+<p><strong>字典树的应用</strong>，通过字典树记录每个串出现的频率，这个仅限于串个数非常少的情况，不是通用解法</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://issac2e.github.io">issac</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://issac2e.github.io/2022/10/15/%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0/topK/">https://issac2e.github.io/2022/10/15/%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0/topK/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></div><div class="post_share"><div class="social-share" data-image="/./img/avatar.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/10/16/java%E5%9F%BA%E7%A1%80/%E6%95%B4%E7%90%86%E4%B8%80%E4%B8%8Bdecimal/" title="decimal整理"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">decimal整理</div></div></a></div><div class="next-post pull-right"><a href="/2022/02/16/JUC/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" title="深入理解并发编程"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">深入理解并发编程</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2021/11/12/%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E5%BE%AE%E5%8D%9A%E3%80%81%E5%BE%AE%E4%BF%A1%E7%AD%89%E7%A4%BE%E4%BA%A4%E7%BD%91%E7%BB%9C%E4%B8%AD%E7%9A%84%E5%A5%BD%E5%8F%8B%E5%85%B3%E7%B3%BB/" title="图的应用 - 如何存储微博、微信等社交网络中的好友关系"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-11-12</div><div class="title">图的应用 - 如何存储微博、微信等社交网络中的好友关系</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/./img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">issac</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">18</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">10</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/issac2e"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/issac2e" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:issac2e@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">哈哈哈哈哈哈哈哈</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#topK%E9%97%AE%E9%A2%98"><span class="toc-text">topK问题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1%E3%80%81%E6%8E%92%E5%BA%8F%EF%BC%8CO-n"><span class="toc-text">1、排序，O(n)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2%E3%80%81%E5%88%86%E6%B2%BB%E6%80%9D%E6%83%B3%EF%BC%8CO-n"><span class="toc-text">2、分治思想，O(n)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3%E3%80%81%E5%BD%92%E5%B9%B6-amp-%E5%A0%86%E7%9A%84%E5%BA%94%E7%94%A8%EF%BC%8CO-n-logk"><span class="toc-text">3、归并&amp;堆的应用，O(n*logk)</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/04/24/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%A4%B1%E6%95%88%E5%9C%BA%E6%99%AF/" title="分布式锁失效场景">分布式锁失效场景</a><time datetime="2023-04-23T21:25:07.000Z" title="Created 2023-04-24 05:25:07">2023-04-24</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/03/26/Redis/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%BC%93%E5%AD%98%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81%E4%B8%80%E8%87%B4%E6%80%A7/" title="数据库缓存如何保证一致性">数据库缓存如何保证一致性</a><time datetime="2023-03-26T14:12:22.000Z" title="Created 2023-03-26 22:12:22">2023-03-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/03/17/UofG/itProject_Python/" title="itProject_Python">itProject_Python</a><time datetime="2023-03-17T14:02:08.000Z" title="Created 2023-03-17 22:02:08">2023-03-17</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/02/24/UofG/cardGame/" title="Card Game流程梳理">Card Game流程梳理</a><time datetime="2023-02-24T14:02:08.000Z" title="Created 2023-02-24 22:02:08">2023-02-24</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/02/11/UofG/Advanced%20Programming/" title="Advanced Programming">Advanced Programming</a><time datetime="2023-02-11T14:02:08.000Z" title="Created 2023-02-11 22:02:08">2023-02-11</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2023 By issac</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"></div></div></body></html>
